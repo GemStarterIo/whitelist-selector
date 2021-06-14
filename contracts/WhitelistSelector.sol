@@ -11,19 +11,6 @@ contract WhitelistSelector is Ownable, VRFConsumerBase {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    // KYC step
-
-    event KycWinnerSelected(uint256 timestamp, uint256 kycWinner);
-
-    uint256 public ticketsCount;
-    string public participantsListLink;
-    string public participantsListSha256;
-
-    EnumerableSet.UintSet private kycWinners;
-
-    bool public kycWinnersSelected = false;
-    EnumerableSet.UintSet internal stepsBeforeKycSelection;
-
     // WL step
 
     event WLWinnerSelected(uint256 timestamp, uint256 wlWinner);
@@ -38,7 +25,6 @@ contract WhitelistSelector is Ownable, VRFConsumerBase {
     EnumerableSet.UintSet private wlWinners;
     EnumerableSet.UintSet private wlReserve;
 
-    bool public kycSelectionFinished = false;
     bool public wlWinnersSelected = false;
     EnumerableSet.UintSet internal stepsBeforeWLSelection;
 
@@ -94,101 +80,13 @@ contract WhitelistSelector is Ownable, VRFConsumerBase {
      */
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
         randomResult = randomness;
-        if (!stepsBeforeKycSelection.contains(1)) {
-            stepsBeforeKycSelection.add(1);
+        if (!stepsBeforeWLSelection.contains(1)) {
+            stepsBeforeWLSelection.add(1);
         }
     }
 
     function _getSeed() internal view virtual returns (uint256 seed) {
         return uint256(blockhash(block.number - 1));
-    }
-
-    function setTicketsNumber(uint256 number) public onlyOwner {
-        require(!kycWinnersSelected, "KYC selection performed");
-        ticketsCount = number;
-        if (!stepsBeforeKycSelection.contains(4)) {
-            stepsBeforeKycSelection.add(4);
-        }
-    }
-
-    function setParticipantsListLink(string memory link) public onlyOwner {
-        require(!kycWinnersSelected, "KYC selection performed");
-        participantsListLink = link;
-        if (!stepsBeforeKycSelection.contains(2)) {
-            stepsBeforeKycSelection.add(2);
-        }
-    }
-
-    function setParticipantsListSha256(string memory sha256Hash) public onlyOwner {
-        require(!kycWinnersSelected, "KYC selection performed");
-        participantsListSha256 = sha256Hash;
-        if (!stepsBeforeKycSelection.contains(3)) {
-            stepsBeforeKycSelection.add(3);
-        }
-    }
-
-    function selectKycWinners(uint256 count) public onlyOwner {
-        require(stepsBeforeKycSelection.length() == 4, "KYC: Not all steps performed");
-        require(!kycSelectionFinished, "KYC: No more");
-        require(randomResult != 0, "KYC: Chainlink data recheck");
-        require((count + kycWinners.length()) <= ticketsCount, "KYC: Outside of ticket range");
-
-        if (previousWinnerSeed == 0) {
-            previousWinnerSeed = randomResult;
-        }
-
-        for (uint256 i = 0; i < count; i++) {
-            uint256 winnerSeed;
-            uint256 winnerIndex;
-
-            bool winnerSelected = false;
-            uint256 nonce = 0;
-            do {
-                winnerSeed = uint256(keccak256(abi.encodePacked(previousWinnerSeed, i, nonce)));
-                winnerIndex = winnerSeed % ticketsCount;
-                nonce++;
-
-                winnerSelected = !kycWinners.contains(winnerIndex);
-            } while (!winnerSelected);
-
-            kycWinners.add(winnerIndex);
-            previousWinnerSeed = winnerSeed;
-
-            emit KycWinnerSelected(block.timestamp, winnerIndex);
-        }
-
-        kycWinnersSelected = true;
-    }
-
-    function getKycWinners() external view returns (uint256[] memory) {
-        uint256[] memory winners = new uint256[](kycWinners.length());
-
-        for (uint256 i = 0; i < kycWinners.length(); i++) {
-            winners[i] = kycWinners.at(i);
-        }
-
-        return winners;
-    }
-
-    function getKycWinnersInRange(uint256 from, uint256 to) external view returns (uint256[] memory) {
-        require(from < to, "Incorrect range");
-        require(to < kycWinners.length(), "Incorrect range");
-
-        uint256[] memory winners = new uint256[](to - from + 1);
-
-        for (uint256 i = 0; i <= to - from; i++) {
-            winners[i] = kycWinners.at(i + from);
-        }
-
-        return winners;
-    }
-
-    function finishKYCSelection() public onlyOwner {
-        require(kycWinnersSelected, "KYC selection not performed");
-        kycSelectionFinished = true;
-        if (!stepsBeforeWLSelection.contains(1)) {
-            stepsBeforeWLSelection.add(1);
-        }
     }
 
     function setKycNumber(uint256 number) public onlyOwner {
@@ -224,9 +122,12 @@ contract WhitelistSelector is Ownable, VRFConsumerBase {
     }
 
     function selectWLWinners(uint256 count) public onlyOwner {
-        require(kycSelectionFinished, "WL: KYC not finished");
         require(stepsBeforeWLSelection.length() == 5, "WL: Not all steps performed");
         require((count + wlWinners.length()) <= wlLimit, "WL: No more winners");
+
+        if (previousWinnerSeed == 0) {
+            previousWinnerSeed = randomResult;
+        }
 
         for (uint256 i = 0; i < count; i++) {
             uint256 winnerSeed;
@@ -236,7 +137,7 @@ contract WhitelistSelector is Ownable, VRFConsumerBase {
             uint256 nonce = 0;
             do {
                 winnerSeed = uint256(keccak256(abi.encodePacked(previousWinnerSeed, i, nonce)));
-                winnerIndex = winnerSeed % kycCount;
+                winnerIndex = (winnerSeed % kycCount) + 1;
                 nonce++;
 
                 winnerSelected = !wlWinners.contains(winnerIndex);
@@ -287,7 +188,7 @@ contract WhitelistSelector is Ownable, VRFConsumerBase {
             uint256 nonce = 0;
             do {
                 winnerSeed = uint256(keccak256(abi.encodePacked(previousWinnerSeed, i, nonce)));
-                winnerIndex = winnerSeed % kycCount;
+                winnerIndex = (winnerSeed % kycCount) + 1;
                 nonce++;
 
                 winnerSelected = !wlWinners.contains(winnerIndex) && !wlReserve.contains(winnerIndex);

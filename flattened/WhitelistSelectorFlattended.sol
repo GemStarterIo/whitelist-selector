@@ -1,8 +1,6 @@
-@@ -0,0 +1,1040 @@
 // File contracts/interfaces/IERC20.sol
 
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.4;
 
 interface IERC20 {
@@ -10,39 +8,23 @@ interface IERC20 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
     function totalSupply() external view returns (uint256);
-
     function balanceOf(address account) external view returns (uint256);
-
     function allowance(address owner, address spender) external view returns (uint256);
 
     function approve(address spender, uint256 amount) external returns (bool);
-
     function transfer(address to, uint256 value) external returns (bool);
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) external returns (bool);
+    function transferFrom(address from, address to, uint256 value) external returns (bool);
 
     // EIP 2612
     // solhint-disable-next-line func-name-mixedcase
     function DOMAIN_SEPARATOR() external view returns (bytes32);
-
     function nonces(address owner) external view returns (uint256);
-
-    function permit(
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external;
+    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external;
 }
 
+
 // File contracts/libraries/SafeERC20.sol
+
 
 pragma solidity ^0.8.0;
 
@@ -62,108 +44,191 @@ library SafeERC20 {
         return success && data.length == 32 ? abi.decode(data, (uint8)) : 18;
     }
 
-    function safeTransfer(
-        IERC20 token,
-        address to,
-        uint256 amount
-    ) internal {
+    function safeTransfer(IERC20 token, address to, uint256 amount) internal {
         // solhint-disable-next-line avoid-low-level-calls
         (bool success, bytes memory data) = address(token).call(abi.encodeWithSelector(0xa9059cbb, to, amount));
         require(success && (data.length == 0 || abi.decode(data, (bool))), "SafeERC20: Transfer failed");
     }
 
-    function safeTransferFrom(
-        IERC20 token,
-        address from,
-        uint256 amount
-    ) internal {
+    function safeTransferFrom(IERC20 token, address from, uint256 amount) internal {
         // solhint-disable-next-line avoid-low-level-calls
         (bool success, bytes memory data) = address(token).call(abi.encodeWithSelector(0x23b872dd, from, address(this), amount));
         require(success && (data.length == 0 || abi.decode(data, (bool))), "SafeERC20: TransferFrom failed");
     }
 }
 
+
 // File @chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol@v0.1.7
+
 
 pragma solidity ^0.8.0;
 
 interface LinkTokenInterface {
-    function allowance(address owner, address spender) external view returns (uint256 remaining);
 
-    function approve(address spender, uint256 value) external returns (bool success);
+  function allowance(
+    address owner,
+    address spender
+  )
+    external
+    view
+    returns (
+      uint256 remaining
+    );
 
-    function balanceOf(address owner) external view returns (uint256 balance);
+  function approve(
+    address spender,
+    uint256 value
+  )
+    external
+    returns (
+      bool success
+    );
 
-    function decimals() external view returns (uint8 decimalPlaces);
+  function balanceOf(
+    address owner
+  )
+    external
+    view
+    returns (
+      uint256 balance
+    );
 
-    function decreaseApproval(address spender, uint256 addedValue) external returns (bool success);
+  function decimals()
+    external
+    view
+    returns (
+      uint8 decimalPlaces
+    );
 
-    function increaseApproval(address spender, uint256 subtractedValue) external;
+  function decreaseApproval(
+    address spender,
+    uint256 addedValue
+  )
+    external
+    returns (
+      bool success
+    );
 
-    function name() external view returns (string memory tokenName);
+  function increaseApproval(
+    address spender,
+    uint256 subtractedValue
+  ) external;
 
-    function symbol() external view returns (string memory tokenSymbol);
+  function name()
+    external
+    view
+    returns (
+      string memory tokenName
+    );
 
-    function totalSupply() external view returns (uint256 totalTokensIssued);
+  function symbol()
+    external
+    view
+    returns (
+      string memory tokenSymbol
+    );
 
-    function transfer(address to, uint256 value) external returns (bool success);
+  function totalSupply()
+    external
+    view
+    returns (
+      uint256 totalTokensIssued
+    );
 
-    function transferAndCall(
-        address to,
-        uint256 value,
-        bytes calldata data
-    ) external returns (bool success);
+  function transfer(
+    address to,
+    uint256 value
+  )
+    external
+    returns (
+      bool success
+    );
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) external returns (bool success);
+  function transferAndCall(
+    address to,
+    uint256 value,
+    bytes calldata data
+  )
+    external
+    returns (
+      bool success
+    );
+
+  function transferFrom(
+    address from,
+    address to,
+    uint256 value
+  )
+    external
+    returns (
+      bool success
+    );
+
 }
 
+
 // File @chainlink/contracts/src/v0.8/dev/VRFRequestIDBase.sol@v0.1.7
+
 
 pragma solidity ^0.8.0;
 
 contract VRFRequestIDBase {
-    /**
-     * @notice returns the seed which is actually input to the VRF coordinator
-     *
-     * @dev To prevent repetition of VRF output due to repetition of the
-     * @dev user-supplied seed, that seed is combined in a hash with the
-     * @dev user-specific nonce, and the address of the consuming contract. The
-     * @dev risk of repetition is mostly mitigated by inclusion of a blockhash in
-     * @dev the final seed, but the nonce does protect against repetition in
-     * @dev requests which are included in a single block.
-     *
-     * @param _userSeed VRF seed input provided by user
-     * @param _requester Address of the requesting contract
-     * @param _nonce User-specific nonce at the time of the request
-     */
-    function makeVRFInputSeed(
-        bytes32 _keyHash,
-        uint256 _userSeed,
-        address _requester,
-        uint256 _nonce
-    ) internal pure returns (uint256) {
-        return uint256(keccak256(abi.encode(_keyHash, _userSeed, _requester, _nonce)));
-    }
 
-    /**
-     * @notice Returns the id for this request
-     * @param _keyHash The serviceAgreement ID to be used for this request
-     * @param _vRFInputSeed The seed to be passed directly to the VRF
-     * @return The id for this request
-     *
-     * @dev Note that _vRFInputSeed is not the seed passed by the consuming
-     * @dev contract, but the one generated by makeVRFInputSeed
-     */
-    function makeRequestId(bytes32 _keyHash, uint256 _vRFInputSeed) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_keyHash, _vRFInputSeed));
-    }
+  /**
+   * @notice returns the seed which is actually input to the VRF coordinator
+   *
+   * @dev To prevent repetition of VRF output due to repetition of the
+   * @dev user-supplied seed, that seed is combined in a hash with the
+   * @dev user-specific nonce, and the address of the consuming contract. The
+   * @dev risk of repetition is mostly mitigated by inclusion of a blockhash in
+   * @dev the final seed, but the nonce does protect against repetition in
+   * @dev requests which are included in a single block.
+   *
+   * @param _userSeed VRF seed input provided by user
+   * @param _requester Address of the requesting contract
+   * @param _nonce User-specific nonce at the time of the request
+   */
+  function makeVRFInputSeed(
+    bytes32 _keyHash,
+    uint256 _userSeed,
+    address _requester,
+    uint256 _nonce
+  )
+    internal
+    pure
+    returns (
+      uint256
+    )
+  {
+    return uint256(keccak256(abi.encode(_keyHash, _userSeed, _requester, _nonce)));
+  }
+
+  /**
+   * @notice Returns the id for this request
+   * @param _keyHash The serviceAgreement ID to be used for this request
+   * @param _vRFInputSeed The seed to be passed directly to the VRF
+   * @return The id for this request
+   *
+   * @dev Note that _vRFInputSeed is not the seed passed by the consuming
+   * @dev contract, but the one generated by makeVRFInputSeed
+   */
+  function makeRequestId(
+    bytes32 _keyHash,
+    uint256 _vRFInputSeed
+  )
+    internal
+    pure
+    returns (
+      bytes32
+    )
+  {
+    return keccak256(abi.encodePacked(_keyHash, _vRFInputSeed));
+  }
 }
 
+
 // File @chainlink/contracts/src/v0.8/dev/VRFConsumerBase.sol@v0.1.7
+
 
 pragma solidity ^0.8.0;
 
@@ -261,99 +326,118 @@ pragma solidity ^0.8.0;
  * @dev until it calls responds to a request.
  */
 abstract contract VRFConsumerBase is VRFRequestIDBase {
-    /**
-     * @notice fulfillRandomness handles the VRF response. Your contract must
-     * @notice implement it. See "SECURITY CONSIDERATIONS" above for important
-     * @notice principles to keep in mind when implementing your fulfillRandomness
-     * @notice method.
-     *
-     * @dev VRFConsumerBase expects its subcontracts to have a method with this
-     * @dev signature, and will call it once it has verified the proof
-     * @dev associated with the randomness. (It is triggered via a call to
-     * @dev rawFulfillRandomness, below.)
-     *
-     * @param requestId The Id initially returned by requestRandomness
-     * @param randomness the VRF output
-     */
-    function fulfillRandomness(bytes32 requestId, uint256 randomness) internal virtual;
 
-    /**
-     * @notice requestRandomness initiates a request for VRF output given _seed
-     *
-     * @dev The fulfillRandomness method receives the output, once it's provided
-     * @dev by the Oracle, and verified by the vrfCoordinator.
-     *
-     * @dev The _keyHash must already be registered with the VRFCoordinator, and
-     * @dev the _fee must exceed the fee specified during registration of the
-     * @dev _keyHash.
-     *
-     * @dev The _seed parameter is vestigial, and is kept only for API
-     * @dev compatibility with older versions. It can't *hurt* to mix in some of
-     * @dev your own randomness, here, but it's not necessary because the VRF
-     * @dev oracle will mix the hash of the block containing your request into the
-     * @dev VRF seed it ultimately uses.
-     *
-     * @param _keyHash ID of public key against which randomness is generated
-     * @param _fee The amount of LINK to send with the request
-     * @param _seed seed mixed into the input of the VRF.
-     *
-     * @return requestId unique ID for this request
-     *
-     * @dev The returned requestId can be used to distinguish responses to
-     * @dev concurrent requests. It is passed as the first argument to
-     * @dev fulfillRandomness.
-     */
-    function requestRandomness(
-        bytes32 _keyHash,
-        uint256 _fee,
-        uint256 _seed
-    ) internal returns (bytes32 requestId) {
-        LINK.transferAndCall(vrfCoordinator, _fee, abi.encode(_keyHash, _seed));
-        // This is the seed passed to VRFCoordinator. The oracle will mix this with
-        // the hash of the block containing this request to obtain the seed/input
-        // which is finally passed to the VRF cryptographic machinery.
-        uint256 vRFSeed = makeVRFInputSeed(_keyHash, _seed, address(this), nonces[_keyHash]);
-        // nonces[_keyHash] must stay in sync with
-        // VRFCoordinator.nonces[_keyHash][this], which was incremented by the above
-        // successful LINK.transferAndCall (in VRFCoordinator.randomnessRequest).
-        // This provides protection against the user repeating their input seed,
-        // which would result in a predictable/duplicate output, if multiple such
-        // requests appeared in the same block.
-        nonces[_keyHash] = nonces[_keyHash] + 1;
-        return makeRequestId(_keyHash, vRFSeed);
-    }
+  /**
+   * @notice fulfillRandomness handles the VRF response. Your contract must
+   * @notice implement it. See "SECURITY CONSIDERATIONS" above for important
+   * @notice principles to keep in mind when implementing your fulfillRandomness
+   * @notice method.
+   *
+   * @dev VRFConsumerBase expects its subcontracts to have a method with this
+   * @dev signature, and will call it once it has verified the proof
+   * @dev associated with the randomness. (It is triggered via a call to
+   * @dev rawFulfillRandomness, below.)
+   *
+   * @param requestId The Id initially returned by requestRandomness
+   * @param randomness the VRF output
+   */
+  function fulfillRandomness(
+    bytes32 requestId,
+    uint256 randomness
+  )
+    internal
+    virtual;
 
-    LinkTokenInterface internal immutable LINK;
-    address private immutable vrfCoordinator;
+  /**
+   * @notice requestRandomness initiates a request for VRF output given _seed
+   *
+   * @dev The fulfillRandomness method receives the output, once it's provided
+   * @dev by the Oracle, and verified by the vrfCoordinator.
+   *
+   * @dev The _keyHash must already be registered with the VRFCoordinator, and
+   * @dev the _fee must exceed the fee specified during registration of the
+   * @dev _keyHash.
+   *
+   * @dev The _seed parameter is vestigial, and is kept only for API
+   * @dev compatibility with older versions. It can't *hurt* to mix in some of
+   * @dev your own randomness, here, but it's not necessary because the VRF
+   * @dev oracle will mix the hash of the block containing your request into the
+   * @dev VRF seed it ultimately uses.
+   *
+   * @param _keyHash ID of public key against which randomness is generated
+   * @param _fee The amount of LINK to send with the request
+   * @param _seed seed mixed into the input of the VRF.
+   *
+   * @return requestId unique ID for this request
+   *
+   * @dev The returned requestId can be used to distinguish responses to
+   * @dev concurrent requests. It is passed as the first argument to
+   * @dev fulfillRandomness.
+   */
+  function requestRandomness(
+    bytes32 _keyHash,
+    uint256 _fee,
+    uint256 _seed
+  )
+    internal
+    returns (
+      bytes32 requestId
+    )
+  {
+    LINK.transferAndCall(vrfCoordinator, _fee, abi.encode(_keyHash, _seed));
+    // This is the seed passed to VRFCoordinator. The oracle will mix this with
+    // the hash of the block containing this request to obtain the seed/input
+    // which is finally passed to the VRF cryptographic machinery.
+    uint256 vRFSeed  = makeVRFInputSeed(_keyHash, _seed, address(this), nonces[_keyHash]);
+    // nonces[_keyHash] must stay in sync with
+    // VRFCoordinator.nonces[_keyHash][this], which was incremented by the above
+    // successful LINK.transferAndCall (in VRFCoordinator.randomnessRequest).
+    // This provides protection against the user repeating their input seed,
+    // which would result in a predictable/duplicate output, if multiple such
+    // requests appeared in the same block.
+    nonces[_keyHash] = nonces[_keyHash] + 1;
+    return makeRequestId(_keyHash, vRFSeed);
+  }
 
-    // Nonces for each VRF key from which randomness has been requested.
-    //
-    // Must stay in sync with VRFCoordinator[_keyHash][this]
-    /* keyHash */
-    /* nonce */
-    mapping(bytes32 => uint256) private nonces;
+  LinkTokenInterface immutable internal LINK;
+  address immutable private vrfCoordinator;
 
-    /**
-     * @param _vrfCoordinator address of VRFCoordinator contract
-     * @param _link address of LINK token contract
-     *
-     * @dev https://docs.chain.link/docs/link-token-contracts
-     */
-    constructor(address _vrfCoordinator, address _link) {
-        vrfCoordinator = _vrfCoordinator;
-        LINK = LinkTokenInterface(_link);
-    }
+  // Nonces for each VRF key from which randomness has been requested.
+  //
+  // Must stay in sync with VRFCoordinator[_keyHash][this]
+  mapping(bytes32 /* keyHash */ => uint256 /* nonce */) private nonces;
 
-    // rawFulfillRandomness is called by VRFCoordinator when it receives a valid VRF
-    // proof. rawFulfillRandomness then calls fulfillRandomness, after validating
-    // the origin of the call
-    function rawFulfillRandomness(bytes32 requestId, uint256 randomness) external {
-        require(msg.sender == vrfCoordinator, "Only VRFCoordinator can fulfill");
-        fulfillRandomness(requestId, randomness);
-    }
+  /**
+   * @param _vrfCoordinator address of VRFCoordinator contract
+   * @param _link address of LINK token contract
+   *
+   * @dev https://docs.chain.link/docs/link-token-contracts
+   */
+  constructor(
+    address _vrfCoordinator,
+    address _link
+  ) {
+    vrfCoordinator = _vrfCoordinator;
+    LINK = LinkTokenInterface(_link);
+  }
+
+  // rawFulfillRandomness is called by VRFCoordinator when it receives a valid VRF
+  // proof. rawFulfillRandomness then calls fulfillRandomness, after validating
+  // the origin of the call
+  function rawFulfillRandomness(
+    bytes32 requestId,
+    uint256 randomness
+  )
+    external
+  {
+    require(msg.sender == vrfCoordinator, "Only VRFCoordinator can fulfill");
+    fulfillRandomness(requestId, randomness);
+  }
 }
 
+
 // File @openzeppelin/contracts/utils/structs/EnumerableSet.sol@v4.1.0
+
 
 pragma solidity ^0.8.0;
 
@@ -394,9 +478,10 @@ library EnumerableSet {
     struct Set {
         // Storage of set values
         bytes32[] _values;
+
         // Position of the value in the `values` array, plus 1 because index 0
         // means a value is not in the set.
-        mapping(bytes32 => uint256) _indexes;
+        mapping (bytes32 => uint256) _indexes;
     }
 
     /**
@@ -427,8 +512,7 @@ library EnumerableSet {
         // We read and store the value's index to prevent multiple reads from the same storage slot
         uint256 valueIndex = set._indexes[value];
 
-        if (valueIndex != 0) {
-            // Equivalent to contains(set, value)
+        if (valueIndex != 0) { // Equivalent to contains(set, value)
             // To delete an element from the _values array in O(1), we swap the element to delete with the last one in
             // the array, and then remove the last element (sometimes called as 'swap and pop').
             // This modifies the order of the array, as noted in {at}.
@@ -472,16 +556,16 @@ library EnumerableSet {
         return set._values.length;
     }
 
-    /**
-     * @dev Returns the value stored at position `index` in the set. O(1).
-     *
-     * Note that there are no guarantees on the ordering of values inside the
-     * array, and it may change when more values are added or removed.
-     *
-     * Requirements:
-     *
-     * - `index` must be strictly less than {length}.
-     */
+   /**
+    * @dev Returns the value stored at position `index` in the set. O(1).
+    *
+    * Note that there are no guarantees on the ordering of values inside the
+    * array, and it may change when more values are added or removed.
+    *
+    * Requirements:
+    *
+    * - `index` must be strictly less than {length}.
+    */
     function _at(Set storage set, uint256 index) private view returns (bytes32) {
         require(set._values.length > index, "EnumerableSet: index out of bounds");
         return set._values[index];
@@ -527,16 +611,16 @@ library EnumerableSet {
         return _length(set._inner);
     }
 
-    /**
-     * @dev Returns the value stored at position `index` in the set. O(1).
-     *
-     * Note that there are no guarantees on the ordering of values inside the
-     * array, and it may change when more values are added or removed.
-     *
-     * Requirements:
-     *
-     * - `index` must be strictly less than {length}.
-     */
+   /**
+    * @dev Returns the value stored at position `index` in the set. O(1).
+    *
+    * Note that there are no guarantees on the ordering of values inside the
+    * array, and it may change when more values are added or removed.
+    *
+    * Requirements:
+    *
+    * - `index` must be strictly less than {length}.
+    */
     function at(Bytes32Set storage set, uint256 index) internal view returns (bytes32) {
         return _at(set._inner, index);
     }
@@ -581,19 +665,20 @@ library EnumerableSet {
         return _length(set._inner);
     }
 
-    /**
-     * @dev Returns the value stored at position `index` in the set. O(1).
-     *
-     * Note that there are no guarantees on the ordering of values inside the
-     * array, and it may change when more values are added or removed.
-     *
-     * Requirements:
-     *
-     * - `index` must be strictly less than {length}.
-     */
+   /**
+    * @dev Returns the value stored at position `index` in the set. O(1).
+    *
+    * Note that there are no guarantees on the ordering of values inside the
+    * array, and it may change when more values are added or removed.
+    *
+    * Requirements:
+    *
+    * - `index` must be strictly less than {length}.
+    */
     function at(AddressSet storage set, uint256 index) internal view returns (address) {
         return address(uint160(uint256(_at(set._inner, index))));
     }
+
 
     // UintSet
 
@@ -635,22 +720,25 @@ library EnumerableSet {
         return _length(set._inner);
     }
 
-    /**
-     * @dev Returns the value stored at position `index` in the set. O(1).
-     *
-     * Note that there are no guarantees on the ordering of values inside the
-     * array, and it may change when more values are added or removed.
-     *
-     * Requirements:
-     *
-     * - `index` must be strictly less than {length}.
-     */
+   /**
+    * @dev Returns the value stored at position `index` in the set. O(1).
+    *
+    * Note that there are no guarantees on the ordering of values inside the
+    * array, and it may change when more values are added or removed.
+    *
+    * Requirements:
+    *
+    * - `index` must be strictly less than {length}.
+    */
     function at(UintSet storage set, uint256 index) internal view returns (uint256) {
         return uint256(_at(set._inner, index));
     }
 }
 
+
 // File contracts/abstract/Ownable.sol
+
+
 
 // Source: https://github.com/boringcrypto/BoringSolidity/blob/master/contracts/BoringOwnable.sol
 
@@ -708,26 +796,15 @@ abstract contract Ownable is OwnableData {
     }
 }
 
+
 // File contracts/WhitelistSelector.sol
+
 
 pragma solidity ^0.8.4;
 
 contract WhitelistSelector is Ownable, VRFConsumerBase {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
-
-    // KYC step
-
-    event KycWinnerSelected(uint256 timestamp, uint256 kycWinner);
-
-    uint256 public ticketsCount;
-    string public participantsListLink;
-    string public participantsListSha256;
-
-    EnumerableSet.UintSet private kycWinners;
-
-    bool public kycWinnersSelected = false;
-    EnumerableSet.UintSet internal stepsBeforeKycSelection;
 
     // WL step
 
@@ -743,7 +820,6 @@ contract WhitelistSelector is Ownable, VRFConsumerBase {
     EnumerableSet.UintSet private wlWinners;
     EnumerableSet.UintSet private wlReserve;
 
-    bool public kycSelectionFinished = false;
     bool public wlWinnersSelected = false;
     EnumerableSet.UintSet internal stepsBeforeWLSelection;
 
@@ -790,7 +866,7 @@ contract WhitelistSelector is Ownable, VRFConsumerBase {
      * Requests randomness
      */
     function getRandomNumber() public returns (bytes32 requestId) {
-        require(LINK.balanceOf(address(this)) > fee, "Not enough LINK - provide LINK to the contract");
+        require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK - provide LINK to the contract");
         return requestRandomness(keyHash, fee, _getSeed());
     }
 
@@ -799,101 +875,13 @@ contract WhitelistSelector is Ownable, VRFConsumerBase {
      */
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
         randomResult = randomness;
-        if (!stepsBeforeKycSelection.contains(1)) {
-            stepsBeforeKycSelection.add(1);
+        if (!stepsBeforeWLSelection.contains(1)) {
+            stepsBeforeWLSelection.add(1);
         }
     }
 
     function _getSeed() internal view virtual returns (uint256 seed) {
         return uint256(blockhash(block.number - 1));
-    }
-
-    function setTicketsNumber(uint256 number) public onlyOwner {
-        require(!kycWinnersSelected, "KYC selection performed");
-        ticketsCount = number;
-        if (!stepsBeforeKycSelection.contains(4)) {
-            stepsBeforeKycSelection.add(4);
-        }
-    }
-
-    function setParticipantsListLink(string memory link) public onlyOwner {
-        require(!kycWinnersSelected, "KYC selection performed");
-        participantsListLink = link;
-        if (!stepsBeforeKycSelection.contains(2)) {
-            stepsBeforeKycSelection.add(2);
-        }
-    }
-
-    function setParticipantsListSha256(string memory sha256Hash) public onlyOwner {
-        require(!kycWinnersSelected, "KYC selection performed");
-        participantsListSha256 = sha256Hash;
-        if (!stepsBeforeKycSelection.contains(3)) {
-            stepsBeforeKycSelection.add(3);
-        }
-    }
-
-    function selectKycWinners(uint256 count) public onlyOwner {
-        require(stepsBeforeKycSelection.length() == 4, "KYC: Not all steps performed");
-        require(!kycSelectionFinished, "KYC: No more");
-        require(randomResult != 0, "KYC: Chainlink data recheck");
-        require((count + kycWinners.length()) <= ticketsCount, "KYC: Outside of ticket range");
-
-        if (previousWinnerSeed == 0) {
-            previousWinnerSeed = randomResult;
-        }
-
-        for (uint256 i = 0; i < count; i++) {
-            uint256 winnerSeed;
-            uint256 winnerIndex;
-
-            bool winnerSelected = false;
-            uint256 nonce = 0;
-            do {
-                winnerSeed = uint256(keccak256(abi.encodePacked(previousWinnerSeed, i, nonce)));
-                winnerIndex = winnerSeed % ticketsCount;
-                nonce++;
-
-                winnerSelected = !kycWinners.contains(winnerIndex);
-            } while (!winnerSelected);
-
-            kycWinners.add(winnerIndex);
-            previousWinnerSeed = winnerSeed;
-
-            emit KycWinnerSelected(block.timestamp, winnerIndex);
-        }
-
-        kycWinnersSelected = true;
-    }
-
-    function getKycWinners() external view returns (uint256[] memory) {
-        uint256[] memory winners = new uint256[](kycWinners.length());
-
-        for (uint256 i = 0; i < kycWinners.length(); i++) {
-            winners[i] = kycWinners.at(i);
-        }
-
-        return winners;
-    }
-
-    function getKycWinnersInRange(uint256 from, uint256 to) external view returns (uint256[] memory) {
-        require(from < to, "Incorrect range");
-        require(to < kycWinners.length(), "Incorrect range");
-
-        uint256[] memory winners = new uint256[](to - from + 1);
-
-        for (uint256 i = 0; i <= to - from; i++) {
-            winners[i] = kycWinners.at(i + from);
-        }
-
-        return winners;
-    }
-
-    function finishKYCSelection() public onlyOwner {
-        require(kycWinnersSelected, "KYC selection not performed");
-        kycSelectionFinished = true;
-        if (!stepsBeforeWLSelection.contains(1)) {
-            stepsBeforeWLSelection.add(1);
-        }
     }
 
     function setKycNumber(uint256 number) public onlyOwner {
@@ -929,9 +917,12 @@ contract WhitelistSelector is Ownable, VRFConsumerBase {
     }
 
     function selectWLWinners(uint256 count) public onlyOwner {
-        require(kycSelectionFinished, "WL: KYC not finished");
         require(stepsBeforeWLSelection.length() == 5, "WL: Not all steps performed");
         require((count + wlWinners.length()) <= wlLimit, "WL: No more winners");
+
+        if (previousWinnerSeed == 0) {
+            previousWinnerSeed = randomResult;
+        }
 
         for (uint256 i = 0; i < count; i++) {
             uint256 winnerSeed;
@@ -941,7 +932,7 @@ contract WhitelistSelector is Ownable, VRFConsumerBase {
             uint256 nonce = 0;
             do {
                 winnerSeed = uint256(keccak256(abi.encodePacked(previousWinnerSeed, i, nonce)));
-                winnerIndex = winnerSeed % kycCount;
+                winnerIndex = (winnerSeed % kycCount) + 1;
                 nonce++;
 
                 winnerSelected = !wlWinners.contains(winnerIndex);
@@ -992,7 +983,7 @@ contract WhitelistSelector is Ownable, VRFConsumerBase {
             uint256 nonce = 0;
             do {
                 winnerSeed = uint256(keccak256(abi.encodePacked(previousWinnerSeed, i, nonce)));
-                winnerIndex = winnerSeed % kycCount;
+                winnerIndex = (winnerSeed % kycCount) + 1;
                 nonce++;
 
                 winnerSelected = !wlWinners.contains(winnerIndex) && !wlReserve.contains(winnerIndex);
