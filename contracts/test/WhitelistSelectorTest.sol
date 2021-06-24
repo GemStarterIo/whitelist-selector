@@ -9,6 +9,6 @@ contract WhitelistSelectorTest is WhitelistSelector {
 
     constructor(uint256 random) WhitelistSelector(address(0), address(0), keccak256("random"), 1) {
         randomResult = random;
-        stepsBeforeKycSelection.add(1);
+        stepsBeforeWLSelection.add(1);
     }
 }
