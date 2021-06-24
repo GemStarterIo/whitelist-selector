@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.4;
 
-import "@chainlink/contracts/src/v0.8/dev/VRFConsumerBase.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "./external/chainlink/VRFConsumerBase.sol";
+import "./external/openzeppelin/EnumerableSet.sol";
 import "./abstract/Ownable.sol";
 import "./libraries/SafeERC20.sol";
 
@@ -72,7 +72,7 @@ contract WhitelistSelector is Ownable, VRFConsumerBase {
      */
     function getRandomNumber() public returns (bytes32 requestId) {
         require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK - provide LINK to the contract");
-        return requestRandomness(keyHash, fee, _getSeed());
+        return requestRandomness(keyHash, fee);
     }
 
     /**
@@ -83,10 +83,6 @@ contract WhitelistSelector is Ownable, VRFConsumerBase {
         if (!stepsBeforeWLSelection.contains(1)) {
             stepsBeforeWLSelection.add(1);
         }
-    }
-
-    function _getSeed() internal view virtual returns (uint256 seed) {
-        return uint256(blockhash(block.number - 1));
     }
 
     function setKycNumber(uint256 number) public onlyOwner {
