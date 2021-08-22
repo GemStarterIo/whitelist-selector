@@ -21,7 +21,7 @@ dotenvConfig({ path: resolve(__dirname, "./.env") });
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.4",
+    version: "0.8.6",
     settings: {
       optimizer: {
         enabled: true,
@@ -38,9 +38,8 @@ const config: HardhatUserConfig = {
     tests: "./test",
   },
   namedAccounts: {
-    deployer: 0,
+    deployer: 2,
     owner: 1,
-    deployer2: 2,
   },
   typechain: {
     outDir: "typechain",

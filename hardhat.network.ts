@@ -58,6 +58,9 @@ if (alchemyUrl && process.env.FORK_ENABLED && mnemonic) {
       auto: true,
       interval: 30000, // 30 sec per block
     },
+    accounts: {
+      mnemonic,
+    },
   };
 }
 

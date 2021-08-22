@@ -17,11 +17,13 @@
   "include": [
     "artifacts/**/*",
     "artifacts/**/*.json",
+    "deploy/**/*",
     "scripts/**/*",
     "tasks/**/*",
     "test/**/*",
     "typechain/**/*",
     "types/**/*",
-    "hardhat.config.ts"
+    "hardhat.config.ts",
+    "hardhat.network.ts"
   ]
 }

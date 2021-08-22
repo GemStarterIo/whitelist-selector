@@ -8,6 +8,8 @@
     "compile": "hardhat --show-stack-traces --max-memory 8192 compile",
     "coverage": "HIDE_DEPLOY_LOG=true OPTIMIZER_DISABLED=true hardhat coverage --solcoverjs ./.solcover.js --temp artifacts --testfiles \"./test/**/*.ts\"",
     "deploy": "hardhat deploy --write true --network",
+    "deploy:polygon": "hardhat deploy --write true --network polygon --tags",
+    "deploy:hardhat": "hardhat deploy --write true --network hardhat --tags",
     "verify": "hardhat etherscan-verify --license MIT --solc-input --network",
     "etherscan-verify": "hardhat etherscan:verify --network",
     "lint": "yarn run lint:sol && yarn run lint:ts && yarn run prettier:list-different",
